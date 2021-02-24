@@ -1,0 +1,48 @@
+security:
+    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    providers:
+        mongo_user_provider:
+            mongodb:
+                class: App\Document\User
+                property: username
+    encoders:
+        App\Document\User:
+            algorithm: md5
+            encode_as_base64: false
+            iterations: 0
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        login:
+            pattern: ^/login
+            stateless: true
+            anonymous: true
+            provider: mongo_user_provider
+            json_login:
+                check_path: /login
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+                username_path: username
+                password_path: password
+                #require_previous_session: false
+        main:
+            pattern:  ^/
+            stateless: true
+            guard:
+                authenticators:
+                    - app.jwt_token_authenticator
+
+            # activate different ways to authenticate
+            # https://symfony.com/doc/current/security.html#firewalls-authentication
+
+            # https://symfony.com/doc/current/security/impersonating_user.html
+            # switch_user: true
+
+    # Easy way to control access for large sections of your site
+    # Note: Only the *first* access control that matches will be used
+    access_control:
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+        # - { path: ^/admin, roles: ROLE_ADMIN }
+        # - { path: ^/profile, roles: ROLE_USER }
